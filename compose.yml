@@ -15,12 +15,11 @@ services:
       F1AP_WEB_HOST: 0.0.0.0
       F1AP_WEB_PORT: 3000
       F1AP_API_BASE_URL: ${F1AP_API_BASE_URL:-http://api:8080}
-      F1AP_INTERNAL_WRITE_TOKEN_FILE: /run/secrets/internal_write_token
+      # 在服务器 .env 中填入，或按需在服务器本地替换为实际令牌值
+      F1AP_INTERNAL_WRITE_TOKEN: ${F1AP_INTERNAL_WRITE_TOKEN:-}
       F1AP_ALLOWED_HOSTS: ${F1AP_ALLOWED_HOSTS:-127.0.0.1:3000,localhost:3000}
       F1AP_PUBLIC_ORIGIN: ${F1AP_PUBLIC_ORIGIN:-}
       F1AP_SERVICE_LABEL: ${F1AP_SERVICE_LABEL:-F1AP 预测服务}
-    secrets:
-      - internal_write_token
     networks:
       - f1ap_net
     healthcheck:
@@ -32,9 +31,6 @@ services:
     logging:
       driver: json-file
       options: {max-size: "10m", max-file: "3"}
-secrets:
-  internal_write_token:
-    file: ${F1AP_INTERNAL_WRITE_TOKEN_FILE:?请配置服务器私有令牌文件路径}
 networks:
   f1ap_net:
     external: true
