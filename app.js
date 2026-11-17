@@ -784,7 +784,7 @@ function renderConnectionStatus() {
     hostText.textContent = connectionInfo.host;
     heroStatus.textContent = '未连通 · 本地快照';
     heroDetail.textContent = connectionInfo.proxyOutdated
-      ? '本地代理需重启以加载新地址'
+      ? '服务版本待重启更新'
       : `${connectionInfo.host} 暂不可达`;
   }
 }
@@ -902,7 +902,7 @@ async function loadRoundDetail() {
   connectionInfo.syncNote = '';
 
   if (connectionInfo.proxyOutdated) {
-    connectionInfo.syncNote = '本地代理未重启，暂无法拉取新轮次';
+    connectionInfo.syncNote = '服务版本待更新，暂展示本地快照';
   } else if (connectionInfo.online) {
     try {
       const defResp = await getJson(`/internal/v2/rounds/${encodeURIComponent(selectedRoundId)}/predictions/definition`);
@@ -977,11 +977,11 @@ async function loadRoundDetail() {
           }
         } catch (err) {
           if (err?.status === 503) {
-            connectionInfo.syncNote = '代理未配置内部令牌（请用 start.ts ui 启动）';
+            connectionInfo.syncNote = '未配置服务访问令牌';
             break;
           }
           if (err?.status === 401) {
-            connectionInfo.syncNote = '内部令牌校验未通过 (HTTP 401)';
+            connectionInfo.syncNote = '服务访问令牌校验未通过';
             break;
           }
           if (offset === 0 && err?.status === 404) {

@@ -1,0 +1,14 @@
+.git
+.gitignore
+.DS_Store
+.env*
+runtime/
+evidence/
+node_modules/
+build.log
+build-exit.txt
+build-path.txt
+*.log
+start.ts
+README.md
+DESIGN.md
