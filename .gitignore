@@ -1,0 +1,9 @@
+.DS_Store
+runtime/
+evidence/
+build.log
+build-exit.txt
+build-path.txt
+node_modules/
+*.log
+.env*
