@@ -2,6 +2,7 @@
 .gitignore
 .DS_Store
 .env*
+compose.yml
 runtime/
 evidence/
 node_modules/

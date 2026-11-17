@@ -1,0 +1,41 @@
+# f1ap-web 独立容器编排：接入后端 f1ap Compose 默认网络，供 Nginx + Cloudflare 反代
+name: f1ap-web
+services:
+  web:
+    platform: linux/arm64
+    image: ${F1AP_WEB_IMAGE:-f1ap-web:local}
+    build:
+      context: .
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 15s
+    ports:
+      - "127.0.0.1:${F1AP_WEB_PORT:-3000}:3000"
+    environment:
+      F1AP_WEB_HOST: 0.0.0.0
+      F1AP_WEB_PORT: 3000
+      F1AP_API_BASE_URL: ${F1AP_API_BASE_URL:-http://api:8080}
+      F1AP_INTERNAL_WRITE_TOKEN_FILE: /run/secrets/internal_write_token
+      F1AP_ALLOWED_HOSTS: ${F1AP_ALLOWED_HOSTS:-127.0.0.1:3000,localhost:3000}
+      F1AP_PUBLIC_ORIGIN: ${F1AP_PUBLIC_ORIGIN:-}
+      F1AP_SERVICE_LABEL: ${F1AP_SERVICE_LABEL:-F1AP 预测服务}
+    secrets:
+      - internal_write_token
+    networks:
+      - f1ap_net
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+secrets:
+  internal_write_token:
+    file: ${F1AP_INTERNAL_WRITE_TOKEN_FILE:?请配置服务器私有令牌文件路径}
+networks:
+  f1ap_net:
+    external: true
+    name: ${F1AP_DOCKER_NETWORK:-f1ap_default}
