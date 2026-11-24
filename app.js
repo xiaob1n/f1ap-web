@@ -58,14 +58,38 @@ const CHOICE_META = {
   'Not Classified': { cn: '未完赛 / 未分类', sub: '正赛结果' },
 };
 
+// 分站展示信息；未登记的分站仅显示后端名称并隐藏赛道示意图
 const ROUND_META = {
   '2026 Las Vegas Grand Prix': {
     cnName: '2026 拉斯维加斯大奖赛',
     season: '2026',
     gameday: '21',
     subtitle: 'Las Vegas Strip Circuit · 单圈 6.201 km · 正赛 50 圈',
+    circuit: {
+      tag: 'LAS VEGAS STRIP',
+      info: '17 弯角 · 3 段直道',
+      path: 'M 78 140 L 286 140 C 312 140 326 124 322 100 L 312 52 C 306 32 282 26 264 38 L 242 58 C 228 70 212 66 206 48 C 198 28 172 24 156 40 C 142 54 144 76 132 86 L 64 86 C 42 86 34 106 42 124 C 48 136 60 140 78 140 Z',
+      start: { x: 150, y: 140 },
+    },
+  },
+  '2026 Qatar Grand Prix': {
+    cnName: '2026 卡塔尔大奖赛',
+    season: '2026',
+    gameday: '22',
+    subtitle: 'Lusail International Circuit · 单圈 5.419 km · 正赛 57 圈',
+    // 卢赛尔赛道手绘示意，非官方测绘
+    circuit: {
+      tag: 'LUSAIL INTERNATIONAL',
+      info: '16 弯角 · 1 公里主直道',
+      path: 'M 60 150 L 290 150 C 315 150 325 135 318 118 L 300 92 C 292 80 300 66 314 62 C 330 58 334 40 320 32 L 250 30 C 232 30 226 44 236 56 L 250 72 C 258 84 248 96 234 94 L 170 84 C 150 80 140 60 122 56 L 80 50 C 56 46 40 62 46 84 L 52 110 C 56 124 44 132 40 140 C 36 148 46 150 60 150 Z',
+      start: { x: 150, y: 150 },
+    },
   },
 };
+
+const ROUND_POLL_MS = 5 * 60 * 1000;
+// 用户手动选择了非最新分站时不自动切换
+let roundPinned = false;
 
 // 模型标识转为展示名称；未登记的标识原样展示
 const MODEL_NAMES = {
@@ -89,18 +113,28 @@ function formatTime(iso) {
   return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+// 各题号题型固定，具体题面每站不同，标题直接使用官方原文
 const QUESTION_META = {
-  1: { category: '领奖台前三', group: 'PODIUM', cnTitle: '预测 2026 拉斯维加斯大奖赛领奖台前三名', ruleDesc: '按名次选 3 人 · 全中翻倍 ×2' },
-  2: { category: '排位赛杆位', group: 'QUALIFYING', cnTitle: '谁将成为排位赛最快车手（Q3 第一名）？', ruleDesc: '单选 1 人' },
-  3: { category: '梅赛德斯队内对比', group: 'QUALIFYING', cnTitle: '梅赛德斯两位车手谁在排位赛名次更高？', ruleDesc: '二选一' },
-  4: { category: '威廉姆斯晋级深度', group: 'QUALIFYING', cnTitle: '威廉姆斯赛车在排位赛最远能闯入哪个阶段？', ruleDesc: '三选一' },
-  5: { category: '正赛最快单圈', group: 'RACE', cnTitle: '谁将在正赛中跑出全场最快单圈？', ruleDesc: '单选 1 人' },
-  6: { category: '最快进站车队', group: 'RACE', cnTitle: '哪支车队将创造正赛最快进站时间？', ruleDesc: '单选 1 队' },
-  7: { category: '中游四人正赛对决', group: 'RACE', cnTitle: '加斯利、霍肯伯格、贝尔曼、斯特罗尔谁正赛名次最高？', ruleDesc: '四选一' },
-  8: { category: '正赛完赛人数', group: 'RACE', cnTitle: '本场正赛最终会有多少名车手获得有效完赛名次？', ruleDesc: '七档选一' },
-  9: { category: '新秀完赛区间', group: 'RACE', cnTitle: '新秀拉斐尔·卡马拉（Rafael Câmara）将以什么名次完赛？', ruleDesc: '四档选一' },
-  10: { category: '争冠车队单站积分', group: 'RACE', cnTitle: '红牛、法拉利、迈凯伦哪支车队将在本站拿到最多积分？', ruleDesc: '四选一' },
+  1: { category: '领奖台前三', group: 'PODIUM' },
+  2: { category: '排位赛杆位', group: 'QUALIFYING' },
+  3: { category: '排位赛对比', group: 'QUALIFYING' },
+  4: { category: '排位赛晋级深度', group: 'QUALIFYING' },
+  5: { category: '正赛最快单圈', group: 'RACE' },
+  6: { category: '最快进站车队', group: 'RACE' },
+  7: { category: '正赛名次对决', group: 'RACE' },
+  8: { category: '正赛完赛人数', group: 'RACE' },
+  9: { category: '车手完赛区间', group: 'RACE' },
+  10: { category: '正赛特别题', group: 'RACE' },
 };
+
+function questionMeta(q) {
+  const base = QUESTION_META[q.no] ?? { category: `Q${q.no}`, group: 'RACE' };
+  const picks = q.rule?.max_picks ?? 1;
+  const ruleDesc = q.rule?.ordered
+    ? `按名次选 ${picks} 人 · 全中翻倍 ×2`
+    : picks > 1 ? `选 ${picks} 项` : (q.options.length > 4 ? '单选 1 项' : `${q.options.length} 选一`);
+  return { ...base, cnTitle: q.text, ruleDesc };
+}
 
 // 第 21 站各题候选分值静态索引（后端 AnswerDefinition 不含分值，仅作 UI 展示补充）
 const DRIVER_POINTS = {
@@ -308,9 +342,8 @@ function renderPodium(question, pred, keyword) {
   const container = byId('podium-showcase');
   container.replaceChildren();
 
-  const q1Meta = QUESTION_META[1];
   const filterAllows = activeFilter === 'ALL' || activeFilter === 'PODIUM';
-  const searchMatches = question && questionMatchesSearch(question, q1Meta, pred, keyword);
+  const searchMatches = question && questionMatchesSearch(question, questionMeta(question), pred, keyword);
 
   if (!question || !filterAllows || !searchMatches) {
     section.hidden = true;
@@ -405,12 +438,7 @@ function renderQuestionsGrid() {
   for (const q of questions) {
     if (q.no === 1) continue; // 第 1 题已在领奖台展台呈现，避免重复
 
-    const qMeta = QUESTION_META[q.no] ?? {
-      category: `Q${q.no}`,
-      group: 'RACE',
-      cnTitle: `第 ${q.no} 题`,
-      ruleDesc: '单选 1 项',
-    };
+    const qMeta = questionMeta(q);
     const pendingLoad = currentState.loading && !currentState.run_id;
     const pred = currentState.predictions?.[q.source_question_id] ?? {
       status: 'DATA_INSUFFICIENT',
@@ -567,6 +595,26 @@ function renderConnectionStatus() {
   }
 }
 
+// 按分站切换赛道卡片；未登记的分站隐藏示意图
+function renderCircuit(meta, rawName) {
+  const circuit = meta?.circuit;
+  byId('circuit-tag').textContent = circuit?.tag || rawName.toUpperCase() || '—';
+  byId('circuit-info').textContent = circuit?.info || '';
+  byId('circuit-svg-wrap').style.display = circuit ? '' : 'none';
+  if (!circuit) return;
+  byId('circuit-svg').setAttribute('aria-label', circuit.tag);
+  byId('circuit-path-base').setAttribute('d', circuit.path);
+  byId('circuit-path-glow').setAttribute('d', circuit.path);
+  const line = byId('circuit-start-line');
+  line.setAttribute('x1', circuit.start.x);
+  line.setAttribute('x2', circuit.start.x);
+  line.setAttribute('y1', circuit.start.y - 8);
+  line.setAttribute('y2', circuit.start.y + 8);
+  const label = byId('circuit-start-label');
+  label.setAttribute('x', circuit.start.x + 8);
+  label.setAttribute('y', circuit.start.y + 20);
+}
+
 // 刷新顶部 Hero 展台统计
 function renderHeroSummary() {
   const rawName = currentState.display_name || '';
@@ -577,6 +625,8 @@ function renderHeroSummary() {
   byId('hero-round-badge').textContent = meta
     ? `${meta.season} 赛季 · 第 ${meta.gameday} 站`
     : (currentState.round_id ? `Round ${currentState.round_id}` : '实时赛站');
+  byId('podium-heading').textContent = `第 1 题 · ${meta?.cnName || rawName || ''}领奖台前三`;
+  renderCircuit(meta, rawName);
   byId('hero-track-badge').textContent = currentState.locked
     ? '已截止 · 答案已锁定'
     : (currentState.deadline_at ? `截止 ${formatTime(currentState.deadline_at)}` : '截止时间待核实');
@@ -848,8 +898,11 @@ async function loadRounds() {
       }
       if (!data.items.length) {
         roundSelect.add(new Option('暂无赛站', ''));
-      } else if ([...roundSelect.options].some(o => o.value === previous)) {
+      } else if (roundPinned && [...roundSelect.options].some(o => o.value === previous)) {
         roundSelect.value = previous;
+      } else {
+        // 默认展示列表第一项，即后端按 id 倒序返回的最新分站
+        roundPinned = false;
       }
     } catch {
       roundSelect.add(new Option('赛站加载失败', ''));
@@ -863,7 +916,20 @@ async function loadRounds() {
 }
 
 refreshBtn.addEventListener('click', () => void loadRounds());
-roundSelect.addEventListener('change', () => void loadRoundDetail());
+roundSelect.addEventListener('change', () => {
+  // 选回最新分站即恢复自动切换
+  roundPinned = roundSelect.selectedIndex !== 0;
+  void loadRoundDetail();
+});
+
+// 定时检查是否出现新分站，仅在列表首项变化时重新加载，避免打断当前浏览
+async function pollRounds() {
+  if (roundPinned || refreshBtn.disabled) return;
+  const data = await getJson('/api/v1/rounds?page=0&size=1');
+  const newest = data.items[0]?.round_id;
+  if (newest && newest !== roundSelect.options[0]?.value) await loadRounds();
+}
+setInterval(() => void pollRounds(), ROUND_POLL_MS);
 predRunSelect.addEventListener('change', () => applyRunToState(predRunSelect.value));
 searchInput.addEventListener('input', () => renderQuestionsGrid());
 

@@ -93,11 +93,11 @@
         <!-- 赛道示意图 -->
         <div class="gp-circuit-card" aria-label="赛道信息">
           <div class="circuit-header">
-            <span class="circuit-tag">LAS VEGAS STRIP</span>
-            <span class="circuit-length">17 弯角 · 3 段直道</span>
+            <span class="circuit-tag" id="circuit-tag">—</span>
+            <span class="circuit-length" id="circuit-info"></span>
           </div>
-          <div class="circuit-svg-wrap">
-            <svg viewBox="0 0 360 190" class="circuit-svg" role="img" aria-label="Las Vegas Strip Circuit">
+          <div class="circuit-svg-wrap" id="circuit-svg-wrap" style="display: none">
+            <svg viewBox="0 0 360 190" class="circuit-svg" id="circuit-svg" role="img" aria-label="赛道示意图">
               <defs>
                 <linearGradient id="vegasRed" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#E20700" />
@@ -109,12 +109,12 @@
                   <feComposite in="SourceGraphic" in2="blur" operator="over" />
                 </filter>
               </defs>
-              <path d="M 78 140 L 286 140 C 312 140 326 124 322 100 L 312 52 C 306 32 282 26 264 38 L 242 58 C 228 70 212 66 206 48 C 198 28 172 24 156 40 C 142 54 144 76 132 86 L 64 86 C 42 86 34 106 42 124 C 48 136 60 140 78 140 Z"
+              <path id="circuit-path-base" d=""
                     fill="none" stroke="#2D2D3F" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
-              <path d="M 78 140 L 286 140 C 312 140 326 124 322 100 L 312 52 C 306 32 282 26 264 38 L 242 58 C 228 70 212 66 206 48 C 198 28 172 24 156 40 C 142 54 144 76 132 86 L 64 86 C 42 86 34 106 42 124 C 48 136 60 140 78 140 Z"
+              <path id="circuit-path-glow" d=""
                     fill="none" stroke="url(#vegasRed)" stroke-width="3.5" filter="url(#glow)" stroke-linejoin="round" stroke-linecap="round"/>
-              <line x1="150" y1="132" x2="150" y2="148" stroke="#FFFFFF" stroke-width="3"/>
-              <text x="158" y="160" fill="#9E9EB3" font-size="10" font-weight="700" letter-spacing="1">START / FINISH</text>
+              <line id="circuit-start-line" x1="0" y1="0" x2="0" y2="0" stroke="#FFFFFF" stroke-width="3"/>
+              <text id="circuit-start-label" x="0" y="0" fill="#9E9EB3" font-size="10" font-weight="700" letter-spacing="1">START / FINISH</text>
             </svg>
           </div>
           <div class="circuit-footer" id="circuit-footer">
@@ -144,7 +144,7 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">Q01 · PODIUM PREDICTION</span>
-          <h2 id="podium-heading">第 1 题 · 拉斯维加斯大奖赛领奖台前三</h2>
+          <h2 id="podium-heading">第 1 题 · 领奖台前三</h2>
         </div>
         <span class="rule-hint">选 3 人 · 进前三得基础分，名次全对翻倍 (×2)</span>
       </div>
