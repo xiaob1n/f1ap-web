@@ -61,7 +61,8 @@ const server = Bun.serve({
     }
 
     // 仅开放只读预测查询路由；公网展示端绝不代理任何写入接口
-    const internalRead = /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions\/definition$/.test(url.pathname)
+    const internalRead = /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions$/.test(url.pathname)
+      || /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions\/(?:definition|final)$/.test(url.pathname)
       || /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions\/[0-9a-f-]{36}$/.test(url.pathname);
     if (internalRead) {
       if (!isAllowedOrigin(request.headers.get('origin'), url)) {

@@ -798,6 +798,38 @@ button:focus-visible {
 }
 
 /* 响应式 */
+.repo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.repo-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--f1-muted);
+  border-radius: var(--radius-sm);
+  background: var(--f1-surface);
+  color: var(--f1-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.repo-link:hover,
+.repo-link:active {
+  background: var(--f1-surface-elevated);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.repo-link:focus-visible {
+  outline: 2px solid var(--f1-ink);
+  outline-offset: 3px;
+}
+
 @media (max-width: 1024px) {
   .gp-hero-grid,
   .questions-grid {

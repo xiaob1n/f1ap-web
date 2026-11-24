@@ -36,15 +36,18 @@
         </div>
 
         <select id="round" aria-label="选择分站">
-          <option value="140">第 21 站 · 拉斯维加斯大奖赛</option>
+          <option value="">加载中…</option>
         </select>
 
         <select id="pred-run-select" aria-label="选择预测轮次">
-          <option value="111">第 111 轮 · 16:00</option>
-          <option value="109">第 109 轮 · 11:00</option>
+          <option value="">加载中…</option>
         </select>
 
         <button type="button" id="refresh" class="btn-f1">刷新</button>
+        <nav class="repo-links" aria-label="GitHub 后端仓库">
+          <a class="repo-link" href="https://github.com/xiaob1n/f1ap-api" target="_blank" rel="noopener noreferrer">GitHub · API 仓库</a>
+          <a class="repo-link" href="https://github.com/xiaob1n/f1ap-agent" target="_blank" rel="noopener noreferrer">GitHub · Agent 仓库</a>
+        </nav>
       </div>
     </div>
   </header>
@@ -55,12 +58,12 @@
       <div class="gp-hero-grid">
         <div class="gp-hero-main">
           <div class="gp-badges">
-            <span class="badge badge-red" id="hero-round-badge">2026 赛季 · 第 21 站</span>
-            <span class="badge badge-outline">夜间街道赛</span>
+            <span class="badge badge-red" id="hero-round-badge">实时赛站</span>
+            <span class="badge badge-outline" id="hero-track-badge">F1 赛前预测</span>
           </div>
 
-          <h2 id="gp-title" class="gp-name">2026 拉斯维加斯大奖赛</h2>
-          <p class="gp-subtitle" id="gp-subtitle">Las Vegas Strip Circuit · 单圈 6.201 km · 正赛 50 圈</p>
+          <h2 id="gp-title" class="gp-name">正在连接后端…</h2>
+          <p class="gp-subtitle" id="gp-subtitle">正在从后端实时获取赛站、赛题与预测批次</p>
 
           <!-- 四项核心状态（连接 / 轮次 / 模型 / 推荐概览） -->
           <div class="hero-metrics" aria-label="连接与预测概览">
@@ -71,24 +74,24 @@
             </div>
             <div class="metric-cell">
               <span class="metric-label">预测轮次</span>
-              <strong class="metric-value" id="pred-round">第 111 轮</strong>
-              <span class="metric-sub" id="pred-round-sub">11月17日 16:00 批次</span>
+              <strong class="metric-value" id="pred-round">—</strong>
+              <span class="metric-sub" id="pred-round-sub">等待同步</span>
             </div>
             <div class="metric-cell">
               <span class="metric-label">预测模型</span>
-              <strong class="metric-value" id="pred-model">DeepSeek Flash</strong>
+              <strong class="metric-value" id="pred-model">—</strong>
               <span class="metric-sub" id="pred-generated">—</span>
             </div>
             <div class="metric-cell metric-highlight">
               <span class="metric-label">推荐概览</span>
-              <strong class="metric-value" id="kpi-predicted">10 / 10 题</strong>
-              <span class="metric-sub" id="kpi-points-sub">组合 145 分 · 最高 178 分</span>
+              <strong class="metric-value" id="kpi-predicted">—</strong>
+              <span class="metric-sub" id="kpi-points-sub">等待同步</span>
             </div>
           </div>
         </div>
 
         <!-- 赛道示意图 -->
-        <div class="gp-circuit-card" aria-label="拉斯维加斯赛道信息">
+        <div class="gp-circuit-card" aria-label="赛道信息">
           <div class="circuit-header">
             <span class="circuit-tag">LAS VEGAS STRIP</span>
             <span class="circuit-length">17 弯角 · 3 段直道</span>
@@ -115,8 +118,8 @@
             </svg>
           </div>
           <div class="circuit-footer" id="circuit-footer">
-            <span>头号热门：<strong id="circuit-winner">拉塞尔</strong></span>
-            <span>最快进站：<strong id="circuit-pit">梅赛德斯</strong></span>
+            <span>头号热门：<strong id="circuit-winner">—</strong></span>
+            <span>最快进站：<strong id="circuit-pit">—</strong></span>
           </div>
         </div>
       </div>
