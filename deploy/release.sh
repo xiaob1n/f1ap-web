@@ -24,13 +24,24 @@ if [[ -n "$container" ]]; then
   previous_ref=$(docker inspect --format '{{.Config.Image}}' "$container" 2>/dev/null) || { echo 'INSPECT_FAILED' >&2; exit 4; }
   [[ -n "$previous_id" && -n "$previous_ref" ]] || { echo 'INSPECT_FAILED' >&2; exit 4; }
 fi
-echo "PULL $tag"
-docker pull "$F1AP_WEB_IMAGE" >/dev/null 2>&1 || { echo 'PULL_FAILED' >&2; exit 5; }
 rollback=''
 if [[ -n "$previous_id" ]]; then
+  pin_failed() { echo 'PIN_FAILED' >&2; exit 5; }
+  if ! docker image inspect "$previous_id" >/dev/null 2>&1; then
+    # containerd 索引可能只剩运行平台清单；必须证明候选与运行容器的平台清单相同。
+    expected=$(docker inspect --format '{{if .ImageManifestDescriptor}}{{.ImageManifestDescriptor.Digest}} {{.ImageManifestDescriptor.Platform.OS}}/{{.ImageManifestDescriptor.Platform.Architecture}}{{end}}' "$container" 2>/dev/null) || pin_failed
+    [[ "$expected" =~ ^sha256:[a-f0-9]{64}\ linux/arm64$ ]] || pin_failed
+    candidate=$(docker image inspect --format '{{.Id}}' "$previous_ref" 2>/dev/null) || pin_failed
+    [[ "$candidate" =~ ^sha256:[a-f0-9]{64}$ ]] || pin_failed
+    selected=$(docker image inspect --platform linux/arm64 --format '{{.Id}} {{.Os}}/{{.Architecture}}' "$candidate" 2>/dev/null) || pin_failed
+    [[ "$selected" == "$expected" ]] || pin_failed
+    previous_id=$candidate
+  fi
   rollback="f1ap-web-rollback:$(date +%s)-$$"
-  docker tag "$previous_id" "$rollback" >/dev/null 2>&1 || { echo 'PIN_FAILED' >&2; exit 5; }
+  docker tag "$previous_id" "$rollback" >/dev/null 2>&1 || pin_failed
 fi
+echo "PULL $tag"
+docker pull "$F1AP_WEB_IMAGE" >/dev/null 2>&1 || { echo 'PULL_FAILED' >&2; exit 5; }
 up() { "${compose[@]}" up -d --no-deps --no-build --wait --wait-timeout 120 web >/dev/null 2>&1; }
 rollback_release() {
   if [[ -z "$rollback" ]]; then echo 'NO_PREVIOUS_RELEASE' >&2; return 1; fi
