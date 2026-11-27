@@ -82,10 +82,15 @@ test('错误登录不清其他token；响应shape/过期限制；未知错误不
 test('邮箱仅ASCII空格trim不折点plus，密码按codepoint不trim', () => {
   expect(normalizeEmail(' A.B+T@EXAMPLE.COM ')).toBe('a.b+t@example.com');
   for (const email of ['\ta@example.com', 'é@example.com', 'K@example.com', 'a@localhost', 'a..b@example.com', 'a'.repeat(65) + '@example.com']) expect(() => normalizeEmail(email)).toThrow();
-  expect(validatePassword('😀'.repeat(12))).toBe(true); expect(validatePassword(' '.repeat(12))).toBe(true);
-  expect(validatePassword('😀'.repeat(129))).toBe(false); expect(validatePassword('a'.repeat(11))).toBe(false);
-  expect(validatePassword('a'.repeat(12) + '\ud800')).toBe(false);
-  expect(validatePassword('\udc00' + 'a'.repeat(12))).toBe(false);
+  expect(validatePassword('Abc123')).toBe(true);
+  expect(validatePassword('Ab1Ab')).toBe(false);
+  expect(validatePassword('Abcdef')).toBe(false);
+  expect(validatePassword('abcdef1')).toBe(false);
+  expect(validatePassword('ABCDEF1')).toBe(false);
+  expect(validatePassword('A1' + 'a'.repeat(126))).toBe(true);
+  expect(validatePassword('A1' + 'a'.repeat(127))).toBe(false);
+  expect(validatePassword('Abc123' + '\ud800')).toBe(false);
+  expect(validatePassword('\udc00Abc123')).toBe(false);
 });
 test('30秒超时长于代理25秒，中止POST无自动重试且结果未知', async () => {
   const s = setup([() => new Promise((resolve, reject) => {

@@ -27,9 +27,12 @@ export function normalizeEmail(value) {
   }
   return email;
 }
+// 至少 6 位，且必须同时包含数字、大写字母和小写字母。
 export function validatePassword(value) {
-  return typeof value === 'string' && [...value].every(point => !/^[\ud800-\udfff]$/.test(point)) &&
-    [...value].length >= 12 && [...value].length <= 128 && new TextEncoder().encode(value).length <= 512;
+  if (typeof value !== 'string' || [...value].some(point => /^[\ud800-\udfff]$/.test(point))) return false;
+  const length = [...value].length;
+  return length >= 6 && length <= 128 && new TextEncoder().encode(value).length <= 512 &&
+    /[0-9]/.test(value) && /[A-Z]/.test(value) && /[a-z]/.test(value);
 }
 const date = value => typeof value === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value) && Number.isFinite(Date.parse(value));
 function requireStrings(...values) {

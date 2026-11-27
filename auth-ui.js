@@ -12,7 +12,7 @@ const client = createAuthClient();
 const COOLDOWN_MS = 60_000;
 const CODE_PATTERN = /^\d{6}$/;
 const EMAIL_HINT = '请输入有效的邮箱地址。';
-const PASSWORD_HINT = '密码需为 12–128 个字符。';
+const PASSWORD_HINT = '密码至少 6 位，且需同时包含数字、大写和小写字母。';
 const MANAGED = new Set(['login-submit', 'register-send', 'reset-send', 'register-submit', 'reset-submit']);
 
 let config = null;
