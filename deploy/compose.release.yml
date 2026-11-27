@@ -1,0 +1,9 @@
+# 只覆盖发布镜像和公开认证配置，保留服务器已有端口、网络和私有环境。
+services:
+  web:
+    image: ${F1AP_WEB_IMAGE:?release image required}
+    environment:
+      F1AP_AUTH_ENABLED: ${F1AP_AUTH_ENABLED:-false}
+      F1AP_HCAPTCHA_LOGIN_SITEKEY: ${F1AP_HCAPTCHA_LOGIN_SITEKEY:-}
+      F1AP_HCAPTCHA_REGISTER_SITEKEY: ${F1AP_HCAPTCHA_REGISTER_SITEKEY:-}
+      F1AP_HCAPTCHA_RESET_SITEKEY: ${F1AP_HCAPTCHA_RESET_SITEKEY:-}

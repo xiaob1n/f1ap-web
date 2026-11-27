@@ -7,7 +7,9 @@
   <meta name="description" content="F1 Predict 当前分站、十道官方竞猜赛题与 AI 赛前预测">
   <title>F1 PREDICT // 赛事预测</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/auth.css">
   <script type="module" src="/app.js"></script>
+  <script type="module" src="/auth-ui.js"></script>
 </head>
 <body>
   <div class="kerb-strip" aria-hidden="true"></div>
@@ -48,6 +50,14 @@
           <a class="repo-link" href="https://github.com/xiaob1n/f1ap-api" target="_blank" rel="noopener noreferrer">GitHub · API 仓库</a>
           <a class="repo-link" href="https://github.com/xiaob1n/f1ap-agent" target="_blank" rel="noopener noreferrer">GitHub · Agent 仓库</a>
         </nav>
+
+        <!-- 账户入口：匿名显示“登录 / 注册”，已登录显示邮箱 -->
+        <div class="auth-entry">
+          <button type="button" class="auth-entry-btn" id="auth-open" data-state="anonymous" aria-haspopup="dialog" aria-controls="auth-dialog" aria-label="登录或注册账号">
+            <span class="auth-entry-dot" aria-hidden="true"></span>
+            <span class="auth-entry-label" id="auth-entry-label">登录 / 注册</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -180,5 +190,246 @@
       <span>AI 赛前预测参考页面</span>
     </div>
   </footer>
+
+  <!-- ==================== 账号认证面板 ==================== -->
+  <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title" aria-describedby="auth-desc">
+    <div class="auth-panel">
+      <div class="auth-texture" aria-hidden="true"></div>
+      <div class="auth-kerb" aria-hidden="true"></div>
+
+      <header class="auth-head">
+        <p class="auth-kicker" id="auth-kicker">ACCOUNT · SIGN IN</p>
+        <h2 class="auth-title" id="auth-title">登录</h2>
+        <p class="auth-desc" id="auth-desc">使用注册邮箱与密码登录。</p>
+        <button type="button" class="auth-close" id="auth-close" aria-label="关闭账号面板">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+        </button>
+      </header>
+
+      <nav class="auth-stepper" id="auth-stepper" aria-label="认证步骤" hidden>
+        <ol class="auth-stepper-list">
+          <li class="auth-step" data-step="1"><span class="auth-step-index">01</span><span class="auth-step-label">验证邮箱</span></li>
+          <li class="auth-step" data-step="2"><span class="auth-step-index">02</span><span class="auth-step-label">设置密码</span></li>
+        </ol>
+      </nav>
+
+      <p class="auth-notice" id="auth-notice" role="status" aria-live="polite" hidden></p>
+      <p class="auth-alert" id="auth-alert" role="alert" aria-live="assertive" hidden></p>
+
+      <div class="auth-views" id="auth-views">
+        <!-- 登录 -->
+        <section class="auth-view" id="view-login" aria-label="登录" hidden>
+          <h3 class="auth-view-title">使用邮箱和密码登录</h3>
+          <form class="auth-form" id="login-form" novalidate>
+            <div class="auth-field">
+              <label class="auth-label" for="login-email">邮箱</label>
+              <input class="auth-input" id="login-email" name="email" type="email" inputmode="email" autocomplete="username" spellcheck="false" aria-describedby="login-email-error">
+              <p class="auth-field-error" id="login-email-error" role="alert"></p>
+            </div>
+            <div class="auth-field">
+              <label class="auth-label" for="login-password">密码</label>
+              <div class="auth-input-wrap">
+                <input class="auth-input" id="login-password" name="password" type="password" autocomplete="current-password" aria-describedby="login-password-error">
+                <button type="button" class="auth-icon-btn" data-toggle-password="login-password" aria-label="显示密码" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                    <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+                    <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+                    <path class="auth-eye-slash" d="M4 20L20 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+                  </svg>
+                </button>
+              </div>
+              <p class="auth-field-error" id="login-password-error" role="alert"></p>
+            </div>
+
+            <div class="auth-captcha" data-captcha="login">
+              <div class="auth-captcha-head">
+                <span class="auth-captcha-title">Human Check</span>
+                <span class="auth-captcha-state" data-role="state">未完成</span>
+              </div>
+              <div class="auth-captcha-mount" data-role="mount"></div>
+              <button type="button" class="auth-captcha-start" data-role="start" data-busy-lock>开始人机验证</button>
+              <p class="auth-captcha-hint" data-role="hint">完成人机验证后才能提交。</p>
+            </div>
+
+            <button type="submit" class="auth-submit" id="login-submit">登录</button>
+          </form>
+          <div class="auth-links">
+            <button type="button" class="auth-link" id="go-register" data-busy-lock>没有账号？去注册</button>
+            <button type="button" class="auth-link" id="go-reset" data-busy-lock>忘记密码？</button>
+          </div>
+        </section>
+
+        <!-- 注册 -->
+        <section class="auth-view" id="view-register" aria-label="注册" hidden>
+          <h3 class="auth-view-title" id="register-title">第 1 步 · 验证邮箱</h3>
+          <form class="auth-form" id="register-form" novalidate>
+            <div class="auth-step-pane" data-pane="1">
+              <div class="auth-field">
+                <label class="auth-label" for="register-email">邮箱</label>
+                <input class="auth-input" id="register-email" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-describedby="register-email-error">
+                <p class="auth-field-error" id="register-email-error" role="alert"></p>
+              </div>
+
+              <div class="auth-captcha" data-captcha="register">
+                <div class="auth-captcha-head">
+                  <span class="auth-captcha-title">Human Check</span>
+                  <span class="auth-captcha-state" data-role="state">未完成</span>
+                </div>
+                <div class="auth-captcha-mount" data-role="mount"></div>
+                <button type="button" class="auth-captcha-start" data-role="start" data-busy-lock>开始人机验证</button>
+                <p class="auth-captcha-hint" data-role="hint">完成人机验证后才能申请验证码。</p>
+              </div>
+
+              <button type="submit" class="auth-submit" id="register-send">发送验证码</button>
+              <div class="auth-links">
+                <button type="button" class="auth-link" id="register-resume" data-role="resume" data-busy-lock hidden>已有验证码，去输入</button>
+                <button type="button" class="auth-link" id="go-login-register" data-busy-lock>已有账号？去登录</button>
+              </div>
+            </div>
+
+            <div class="auth-step-pane" data-pane="2" hidden>
+              <p class="auth-hint" data-role="sent-hint">验证码申请邮箱：<span data-role="sent-email"></span>，请查收；<span data-role="ttl"></span>。</p>
+              <div class="auth-field">
+                <label class="auth-label" for="register-code">验证码</label>
+                <input class="auth-input auth-code" id="register-code" name="code" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" spellcheck="false" aria-describedby="register-code-error">
+                <p class="auth-field-error" id="register-code-error" role="alert"></p>
+              </div>
+              <div class="auth-field">
+                <label class="auth-label" for="register-password">设置密码</label>
+                <div class="auth-input-wrap">
+                  <input class="auth-input" id="register-password" name="password" type="password" autocomplete="new-password" aria-describedby="register-password-error">
+                  <button type="button" class="auth-icon-btn" data-toggle-password="register-password" aria-label="显示密码" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+                      <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+                      <path class="auth-eye-slash" d="M4 20L20 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+                    </svg>
+                  </button>
+                </div>
+                <p class="auth-field-error" id="register-password-error" role="alert"></p>
+              </div>
+              <div class="auth-field">
+                <label class="auth-label" for="register-password2">确认密码</label>
+                <input class="auth-input" id="register-password2" name="password-confirm" type="password" autocomplete="new-password" aria-describedby="register-password2-error">
+                <p class="auth-field-error" id="register-password2-error" role="alert"></p>
+              </div>
+              <p class="auth-hint auth-hint-soft">密码需为 12–128 个字符。</p>
+              <button type="submit" class="auth-submit" id="register-submit">完成注册</button>
+              <div class="auth-links">
+                <button type="button" class="auth-link" id="register-back" data-busy-lock>返回修改邮箱</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- 找回密码 -->
+        <section class="auth-view" id="view-reset" aria-label="找回密码" hidden>
+          <h3 class="auth-view-title" id="reset-title">第 1 步 · 验证邮箱</h3>
+          <form class="auth-form" id="reset-form" novalidate>
+            <div class="auth-step-pane" data-pane="1">
+              <div class="auth-field">
+                <label class="auth-label" for="reset-email">注册邮箱</label>
+                <input class="auth-input" id="reset-email" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-describedby="reset-email-error">
+                <p class="auth-field-error" id="reset-email-error" role="alert"></p>
+              </div>
+
+              <div class="auth-captcha" data-captcha="reset">
+                <div class="auth-captcha-head">
+                  <span class="auth-captcha-title">Human Check</span>
+                  <span class="auth-captcha-state" data-role="state">未完成</span>
+                </div>
+                <div class="auth-captcha-mount" data-role="mount"></div>
+                <button type="button" class="auth-captcha-start" data-role="start" data-busy-lock>开始人机验证</button>
+                <p class="auth-captcha-hint" data-role="hint">完成人机验证后才能申请验证码。</p>
+              </div>
+
+              <button type="submit" class="auth-submit" id="reset-send">发送验证码</button>
+              <div class="auth-links">
+                <button type="button" class="auth-link" id="reset-resume" data-role="resume" data-busy-lock hidden>已有验证码，去输入</button>
+                <button type="button" class="auth-link" id="go-login-reset" data-busy-lock>已有账号？去登录</button>
+              </div>
+            </div>
+
+            <div class="auth-step-pane" data-pane="2" hidden>
+              <p class="auth-hint" data-role="sent-hint">验证码申请邮箱：<span data-role="sent-email"></span>，请查收；<span data-role="ttl"></span>。</p>
+              <div class="auth-field">
+                <label class="auth-label" for="reset-code">验证码</label>
+                <input class="auth-input auth-code" id="reset-code" name="code" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" spellcheck="false" aria-describedby="reset-code-error">
+                <p class="auth-field-error" id="reset-code-error" role="alert"></p>
+              </div>
+              <div class="auth-field">
+                <label class="auth-label" for="reset-password">新密码</label>
+                <div class="auth-input-wrap">
+                  <input class="auth-input" id="reset-password" name="password" type="password" autocomplete="new-password" aria-describedby="reset-password-error">
+                  <button type="button" class="auth-icon-btn" data-toggle-password="reset-password" aria-label="显示密码" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+                      <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+                      <path class="auth-eye-slash" d="M4 20L20 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+                    </svg>
+                  </button>
+                </div>
+                <p class="auth-field-error" id="reset-password-error" role="alert"></p>
+              </div>
+              <div class="auth-field">
+                <label class="auth-label" for="reset-password2">确认新密码</label>
+                <input class="auth-input" id="reset-password2" name="password-confirm" type="password" autocomplete="new-password" aria-describedby="reset-password2-error">
+                <p class="auth-field-error" id="reset-password2-error" role="alert"></p>
+              </div>
+              <p class="auth-hint auth-hint-soft">密码需为 12–128 个字符。</p>
+              <button type="submit" class="auth-submit" id="reset-submit">重置密码</button>
+              <div class="auth-links">
+                <button type="button" class="auth-link" id="reset-back" data-busy-lock>返回修改邮箱</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- 账号状态 -->
+        <section class="auth-view" id="view-account" aria-label="账号状态" hidden>
+          <h3 class="auth-view-title">当前登录</h3>
+          <dl class="auth-meta">
+            <div class="auth-meta-row">
+              <dt>Email</dt>
+              <dd id="account-email">—</dd>
+            </div>
+            <div class="auth-meta-row">
+              <dt>User ID</dt>
+              <dd id="account-id">—</dd>
+            </div>
+            <div class="auth-meta-row">
+              <dt>Expires</dt>
+              <dd id="account-expires">—</dd>
+            </div>
+          </dl>
+          <p class="auth-hint auth-hint-soft">有效期固定，不会在使用中自动延长，到期后需重新登录。登录状态只保存在当前标签页，关闭标签页后需要重新登录。</p>
+          <div class="auth-danger">
+            <button type="button" class="auth-btn-ghost auth-btn-danger" id="logout-start" data-busy-lock>退出全部设备</button>
+            <div class="auth-confirm" id="logout-confirm" hidden>
+              <p class="auth-confirm-text">确认退出全部设备？其他设备上的登录会立即失效，当前设备也会退出登录。</p>
+              <div class="auth-confirm-actions">
+                <button type="button" class="auth-submit auth-submit-danger" id="logout-yes" data-busy-lock>确认退出</button>
+                <button type="button" class="auth-btn-ghost" id="logout-no" data-busy-lock>取消</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 账号服务不可用 -->
+        <section class="auth-view" id="view-unavailable" aria-label="账号服务暂未开放" hidden>
+          <h3 class="auth-view-title">账号功能当前不可用</h3>
+          <p class="auth-hint" id="unavailable-text">当前部署未开放账号功能，赛事浏览与预测查看不受影响，无需登录即可继续使用。</p>
+          <div class="auth-links auth-links-stack">
+            <button type="button" class="auth-submit" id="unavailable-retry" data-busy-lock>重新检测</button>
+            <button type="button" class="auth-btn-ghost" id="unavailable-close" data-busy-lock>返回赛事</button>
+          </div>
+        </section>
+      </div>
+
+      <p class="auth-footnote">账号功能仅用于登录与密码设置；赛事浏览与预测查看无需登录。</p>
+    </div>
+  </dialog>
 </body>
 </html>

@@ -1,4 +1,4 @@
-# ARM64 / AMD64 通用 Bun 轻量镜像，运行只读 F1 Predict Web 服务
+# ARM64 / AMD64 通用 Bun 轻量镜像；支持用户认证，内部业务接口仍只读
 FROM oven/bun:1-slim
 
 ENV TZ=UTC \
@@ -8,7 +8,7 @@ ENV TZ=UTC \
 WORKDIR /app
 
 # 仅复制前端静态资源与代理服务入口，不包含任何凭据或本地运行产物
-COPY index.html style.css app.js server.ts /app/
+COPY index.html style.css app.js server.ts auth-proxy.ts auth-client.js hcaptcha.js auth-ui.js auth.css /app/
 
 # 非 root 运行身份（10001:10001）
 RUN groupadd --gid 10001 app \

@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { createAuthHandler } from './auth-proxy';
 
 // 优先从环境变量读取令牌，其次支持 Docker Secret 文件路径注入
 function loadToken() {
@@ -35,6 +36,10 @@ const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
+  ['/auth-client.js', ['auth-client.js', 'text/javascript; charset=utf-8']],
+  ['/hcaptcha.js', ['hcaptcha.js', 'text/javascript; charset=utf-8']],
+  ['/auth-ui.js', ['auth-ui.js', 'text/javascript; charset=utf-8']],
+  ['/auth.css', ['auth.css', 'text/css; charset=utf-8']],
 ]);
 
 function isAllowedOrigin(origin, url) {
@@ -44,11 +49,17 @@ function isAllowedOrigin(origin, url) {
   return !allowAnyHost && allowedHosts.has(url.host) && origin === `https://${url.host}`;
 }
 
-const server = Bun.serve({
-  hostname: listenHost,
-  port: listenPort,
-  async fetch(request) {
+export function createServerHandler(fetchUpstream: typeof fetch = fetch) {
+  const fetch = fetchUpstream;
+  const auth = createAuthHandler({ apiBase, fetch, enabled: process.env.F1AP_AUTH_ENABLED === 'true',
+    sitekeys: { login: process.env.F1AP_HCAPTCHA_LOGIN_SITEKEY?.trim() ?? '',
+      register: process.env.F1AP_HCAPTCHA_REGISTER_SITEKEY?.trim() ?? '',
+      reset: process.env.F1AP_HCAPTCHA_RESET_SITEKEY?.trim() ?? '' },
+    isAllowedHost: url => allowAnyHost || allowedHosts.has(url.host), isAllowedOrigin });
+  return async (request: Request) => {
     const url = new URL(request.url);
+    const authResponse = await auth(request);
+    if (authResponse) return authResponse;
     if (request.method !== 'GET') return new Response('方法不允许', { status: 405 });
 
     // 容器与反代存活探针，不依赖上游状态且不受 Host 白名单拦截
@@ -60,7 +71,7 @@ const server = Bun.serve({
       return new Response('Host 不允许', { status: 403 });
     }
 
-    // 仅开放只读预测查询路由；公网展示端绝不代理任何写入接口
+    // 内部业务接口仍仅开放只读预测查询，用户认证不复用内部令牌。
     const internalRead = /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions$/.test(url.pathname)
       || /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions\/(?:definition|final)$/.test(url.pathname)
       || /^\/internal\/v2\/rounds\/[1-9][0-9]*\/predictions\/[0-9a-f-]{36}$/.test(url.pathname);
@@ -129,8 +140,11 @@ const server = Bun.serve({
     return new Response(Bun.file(`${import.meta.dir}/${name}`), {
       headers: { 'Content-Type': type ?? 'application/octet-stream', 'Cache-Control': 'no-store' },
     });
-  },
-});
+  };
+}
+
+if (import.meta.main) {
+const server = Bun.serve({ hostname: listenHost, port: listenPort, fetch: createServerHandler() });
 
 const shutdown = () => {
   server.stop(true);
@@ -140,3 +154,4 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 console.log(`F1AP_WEB_READY http://${server.hostname}:${server.port}`);
+}
