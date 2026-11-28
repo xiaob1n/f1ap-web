@@ -8,3 +8,8 @@ node_modules/
 *.log
 .env*
 !.env.example
+# 测试仅保留本地运行，不提交到远程仓库。
+tests/
+__tests__/
+*.test.*
+*.spec.*

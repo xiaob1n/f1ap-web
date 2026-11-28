@@ -13,3 +13,7 @@ build-path.txt
 start.ts
 README.md
 DESIGN.md
+tests/
+__tests__/
+**/*.test.*
+**/*.spec.*

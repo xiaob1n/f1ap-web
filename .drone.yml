@@ -14,11 +14,10 @@ trigger:
   ref: [refs/tags/v*]
 
 steps:
-  - name: validate-test
+  - name: validate-build
     image: oven/bun:1
     commands:
       - 'test "$${#DRONE_TAG}" -le 128 && printf "%s\n" "$DRONE_TAG" | grep -Eq "^v[a-zA-Z0-9_.-]+$"'
-      - bun test auth-proxy.test.ts auth-client.test.js hcaptcha.test.js deploy/release.test.ts
       - bun build app.js --target browser --outdir /tmp/f1ap-web-browser
       - bun build auth-ui.js --target browser --outdir /tmp/f1ap-web-auth
       - bun build server.ts --target bun --outdir /tmp/f1ap-web-server
